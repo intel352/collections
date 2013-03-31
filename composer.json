@@ -1,0 +1,23 @@
+{
+    "name": "intel352/collections",
+    "type": "library",
+    "description": "PHP 5.3 collection classes",
+    "keywords": ["collections", "array", "iterator"],
+    "homepage": "https://github.com/intel352/collections",
+    "license": "MIT",
+    "authors": [
+        {"name": "Jon Langevin", "email": "jon@langevin.me"}
+    ],
+    "require": {
+        "php": ">=5.3.3",
+        "ext-judy": "*"
+    },
+    "autoload": {
+        "psr-0": { "intel352\\Collections\\": "src/" }
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0-dev"
+        }
+    }
+}
