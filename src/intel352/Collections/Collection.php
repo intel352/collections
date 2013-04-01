@@ -7,10 +7,11 @@ use Closure;
 use Countable;
 use InvalidArgumentException;
 use Iterator;
+use JsonSerializable;
 use Traversable;
 use Judy;
 
-class Collection implements Iterator, Countable, ArrayAccess
+class Collection implements Iterator, Countable, ArrayAccess, JsonSerializable
 {
     private $_index;
     /** @var Judy|Iterator|ArrayAccess|Countable */
@@ -445,4 +446,14 @@ class Collection implements Iterator, Countable, ArrayAccess
         return $collection;
     }
 
+    /**
+     * (PHP 5 >= 5.4.0)
+     * Serializes the object to a value that can be serialized natively by json_encode().
+     * @link http://docs.php.net/manual/en/jsonserializable.jsonserialize.php
+     * @return mixed Returns data which can be serialized by json_encode(), which is a value of any type other than a resource.
+     */
+    public function jsonSerialize()
+    {
+        return $this->toArray();
+    }
 }
