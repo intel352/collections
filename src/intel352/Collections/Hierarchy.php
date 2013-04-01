@@ -28,4 +28,14 @@ class Hierarchy
     {
         return $this->_children;
     }
+
+    /**
+     * @param HierarchyCollection $children
+     * @return $this
+     */
+    public function setChildren(HierarchyCollection $children)
+    {
+        $this->_children = $children;
+        return $this;
+    }
 }
