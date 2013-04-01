@@ -7,12 +7,12 @@ use Closure;
 use Countable;
 use InvalidArgumentException;
 use Iterator;
-use Judy;
-use RecursiveIterator;
 use Traversable;
+use Judy;
 
 class Collection implements Iterator, Countable, ArrayAccess
 {
+    private $_index;
     /** @var Judy|Iterator|ArrayAccess|Countable */
     private $_elements;
 
@@ -21,8 +21,9 @@ class Collection implements Iterator, Countable, ArrayAccess
         $this->_elements = new Judy(Judy::STRING_TO_MIXED);
         if ($iterable!==null && (is_array($iterable) || $iterable instanceof Traversable)) {
             foreach($iterable as $k=>$v) {
-                $this->_elements->offsetSet($k, $v);
+                $this->offsetSet($k, $v);
             }
+            $this->rewind();
         }
     }
 
@@ -33,7 +34,9 @@ class Collection implements Iterator, Countable, ArrayAccess
      */
     public function current()
     {
-        return $this->_elements->current();
+        if (!isset($this->_index))
+            $this->rewind();
+        return $this->_elements->offsetGet($this->_index);
     }
 
     /**
@@ -43,7 +46,9 @@ class Collection implements Iterator, Countable, ArrayAccess
      */
     public function next()
     {
-        $this->_elements->next();
+        if (!isset($this->_index))
+            $this->rewind();
+        $this->_index = $this->_elements->next($this->_index);
     }
 
     /**
@@ -53,7 +58,9 @@ class Collection implements Iterator, Countable, ArrayAccess
      */
     public function key()
     {
-        return $this->_elements->key();
+        if (!isset($this->_index))
+            $this->rewind();
+        return $this->_index;
     }
 
     /**
@@ -64,7 +71,7 @@ class Collection implements Iterator, Countable, ArrayAccess
      */
     public function valid()
     {
-        return $this->_elements->valid();
+        return $this->_elements->offsetExists($this->_index);
     }
 
     /**
@@ -74,34 +81,7 @@ class Collection implements Iterator, Countable, ArrayAccess
      */
     public function rewind()
     {
-        $this->_elements->rewind();
-    }
-
-    /**
-     * Returns if an iterator can be created for the current entry.
-     * @return bool true if the current entry can be iterated over, otherwise returns false.
-     */
-    public function hasChildren()
-    {
-        $current = $this->_elements->current();
-        if ($current instanceof Hierarchy) {
-            return $current->hasChildren();
-        }
-        return false;
-    }
-
-    /**
-     * Returns an iterator for the current entry.
-     * @return HierarchyCollection An iterator for the current entry.
-     * @throws InvalidArgumentException
-     */
-    public function getChildren()
-    {
-        $current = $this->_elements->current();
-        if ($current instanceof Hierarchy) {
-            return $current->getChildren();
-        }
-        throw new InvalidArgumentException;
+        $this->_index = $this->_elements->first();
     }
 
     /**
@@ -177,7 +157,8 @@ class Collection implements Iterator, Countable, ArrayAccess
      */
     public function add($element)
     {
-        $this->_elements[] = $element;
+        $index = (string) $this->count();
+        $this->_elements[$index] = $element;
         return true;
     }
 
@@ -201,7 +182,7 @@ class Collection implements Iterator, Countable, ArrayAccess
      */
     public function contains($element)
     {
-        foreach($this->_elements as $e) {
+        foreach($this as $e) {
             if ($e===$element) return true;
         }
         return false;
@@ -216,10 +197,10 @@ class Collection implements Iterator, Countable, ArrayAccess
      */
     public function remove($key)
     {
-        if (!$this->_elements->offsetExists($key))
+        if (!$this->offsetExists($key))
             return null;
-        $element = $this->_elements->offsetGet($key);
-        $this->_elements->offsetUnset($key);
+        $element = $this->offsetGet($key);
+        $this->offsetUnset($key);
         return $element;
     }
 
@@ -232,9 +213,9 @@ class Collection implements Iterator, Countable, ArrayAccess
      */
     public function removeElement($element)
     {
-        foreach($this->_elements as $k=>$e) {
+        foreach($this as $k=>$e) {
             if ($e === $element) {
-                $this->_elements->offsetUnset($k);
+                $this->offsetUnset($k);
                 return true;
             }
         }
@@ -251,7 +232,7 @@ class Collection implements Iterator, Countable, ArrayAccess
      */
     public function containsKey($key)
     {
-        return $this->_elements->offsetExists($key);
+        return $this->offsetExists($key);
     }
 
     /**
@@ -263,7 +244,7 @@ class Collection implements Iterator, Countable, ArrayAccess
      */
     public function get($key)
     {
-        return $this->_elements->offsetGet($key);
+        return $this->offsetGet($key);
     }
 
     /**
@@ -274,7 +255,7 @@ class Collection implements Iterator, Countable, ArrayAccess
      */
     public function getKeys()
     {
-        return array_keys(iterator_to_array($this->_elements));
+        return array_keys(iterator_to_array($this));
     }
 
     /**
@@ -285,7 +266,7 @@ class Collection implements Iterator, Countable, ArrayAccess
      */
     public function getValues()
     {
-        return iterator_to_array($this->_elements, false);
+        return iterator_to_array($this, false);
     }
 
     /**
@@ -298,7 +279,7 @@ class Collection implements Iterator, Countable, ArrayAccess
      */
     public function set($key, $value)
     {
-        $this->_elements->offsetSet($key, $value);
+        $this->offsetSet($key, $value);
     }
 
     /**
@@ -308,7 +289,7 @@ class Collection implements Iterator, Countable, ArrayAccess
      */
     public function toArray()
     {
-        return iterator_to_array($this->_elements);
+        return iterator_to_array($this);
     }
 
     /**
@@ -318,7 +299,8 @@ class Collection implements Iterator, Countable, ArrayAccess
      */
     public function first()
     {
-        return $this->_elements->offsetGet($this->_elements->first());
+        $this->rewind();
+        return $this->current();
     }
 
     /**
@@ -328,7 +310,7 @@ class Collection implements Iterator, Countable, ArrayAccess
      */
     public function last()
     {
-        return $this->_elements->offsetGet($this->_elements->last());
+        return $this->offsetGet($this->_elements->last());
     }
 
     /**
@@ -340,8 +322,8 @@ class Collection implements Iterator, Countable, ArrayAccess
      */
     public function exists(Closure $p)
     {
-        foreach ($this->_elements as $key => $element) {
-            if ($p($key, $element)) {
+        foreach ($this as $key => $element) {
+            if ($p($element, $key)) {
                 return true;
             }
         }
@@ -385,9 +367,9 @@ class Collection implements Iterator, Countable, ArrayAccess
      */
     public function map(Closure $p)
     {
-        $cloneCollection = new self();
-        iterator_apply($this->_elements, function()use($p, $cloneCollection){
-                $cloneCollection->offsetSet($this->_elements->key(), $p($this->_elements->current(), $this->_elements->key()));
+        $cloneCollection = new static();
+        iterator_apply($this, function()use($p, $cloneCollection){
+                $cloneCollection->offsetSet($this->key(), $p($this->current(), $this->key()));
                 return true;
             });
         return $cloneCollection;
@@ -405,11 +387,11 @@ class Collection implements Iterator, Countable, ArrayAccess
      */
     public function partition(Closure $p)
     {
-        $trueColl = new self();
-        $falseColl = new self();
-        iterator_apply($this->_elements, function()use($p, $trueColl, $falseColl){
-                $key = $this->_elements->key();
-                $current = $this->_elements->current();
+        $trueColl = new static();
+        $falseColl = new static();
+        iterator_apply($this, function()use($p, $trueColl, $falseColl){
+                $key = $this->key();
+                $current = $this->current();
                 if ($p($current, $key)) {
                     $trueColl->set($key, $current);
                 } else {
@@ -431,7 +413,7 @@ class Collection implements Iterator, Countable, ArrayAccess
      */
     public function indexOf($element)
     {
-        foreach ($this->_elements as $key => $value) {
+        foreach ($this as $key => $value) {
             if ($element===$value) {
                 return $key;
             }
@@ -453,13 +435,13 @@ class Collection implements Iterator, Countable, ArrayAccess
      */
     public function slice($offset, $length = null)
     {
-        $collection = new self();
         $i = 0;
+        $collection = new static();
         do{
-            $collection->offsetSet($offset, $this->_elements->offsetGet($offset));
+            $collection->offsetSet($offset, $this->offsetGet($offset));
             $i++;
             if ($length!==null && $i>=$length) break;
-        } while($offset = $this->_elements->next());
+        } while($offset = $this->_elements->next($offset));
         return $collection;
     }
 

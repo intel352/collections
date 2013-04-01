@@ -3,8 +3,9 @@
 namespace intel352\Collections;
 
 use InvalidArgumentException;
+use RecursiveIterator;
 
-class HierarchyCollection extends Collection
+class HierarchyCollection extends Collection implements RecursiveIterator
 {
 
     /**
