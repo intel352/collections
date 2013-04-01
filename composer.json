@@ -9,7 +9,7 @@
         {"name": "Jon Langevin", "email": "jon@langevin.me"}
     ],
     "require": {
-        "php": ">=5.3.3",
+        "php": ">=5.4",
         "ext-judy": "*"
     },
     "autoload": {

@@ -2,8 +2,6 @@
 
 namespace intel352\Collections;
 
-use RecursiveIterator;
-
 class Hierarchy
 {
     /** @var HierarchyCollection */
@@ -16,7 +14,6 @@ class Hierarchy
 
     /**
      * Returns if an iterator can be created for the current entry.
-     * @link http://php.net/manual/en/recursiveiterator.haschildren.php
      * @return bool true if the current entry can be iterated over, otherwise returns false.
      */
     public function hasChildren()
@@ -25,8 +22,6 @@ class Hierarchy
     }
 
     /**
-     * Returns an iterator for the current entry.
-     * @link http://php.net/manual/en/recursiveiterator.getchildren.php
      * @return HierarchyCollection
      */
     public function getChildren()

@@ -1,4 +1,4 @@
 collections
 ===========
 
-PHP 5.3 collection classes
+PHP 5.4 collection classes
